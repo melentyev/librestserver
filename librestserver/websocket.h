@@ -17,8 +17,8 @@ typedef struct RST_ResourceWebSocket
 } RST_ResourceWebSocket;
 
 ///////////// RST_WebSocketConnectionInterface ///////////////
-void RST_websocketconnectioninterface_send(RST_WebSocketConnectionInterface* conn, const char* str);
-void RST_websocketconnectioninterface_send_n(RST_WebSocketConnectionInterface* conn, const char* buf, int len);
+void RST_websocketconnectioninterface_send(RST_WebSocketConnectionInterface* conn, char* str);
+void RST_websocketconnectioninterface_send_n(RST_WebSocketConnectionInterface* conn, char* buf, int len);
 
 ///////////// RST_ResourceWebSocket ///////////////
 RST_ResourceWebSocket* RST_resourcewebsocket_init();

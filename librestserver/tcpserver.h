@@ -41,7 +41,7 @@ typedef struct RST_SelectTcpServer
     RST_Vector *finished_clients;
     RST_Set *writing_sockets;
     int(*on_client_accepted)(struct RST_SelectTcpServer*, int client_socket);
-    int(*on_data_received)(struct RST_SelectTcpServer*, int client_socket, char* buf, int recved);
+    int(*on_data_received)(struct RST_SelectTcpServer*, int client_socket, uint8_t* buf, int recved);
     int(*on_data_sent)(struct RST_SelectTcpServer*, int client_socket);
 } RST_SelectTcpServer;
 

@@ -13,9 +13,9 @@
 
 #define RST_ALLOC(size, tag) RST_alloc_tag(size, tag)
 #define RST_REALLOC(memory, size, tag) RST_realloc_tag(memory, size, tag)
-#define RST_FREE(memory, tag) RST_free_tag(memory, tag)
+#define RST_FREE(memory, tag) RST_free_tag(memory, (tag))
 
-#define RST_ALLOC_STRUCT(S) (S*)RST_alloc(sizeof(S))
+#define RST_ALLOC_STRUCT(S, tag) (S*)RST_alloc_tag(sizeof(S), (tag))
 
 #define RST_VECTOR_PUSH_BACK(x) RST_vector_push_back(0, (x))
 
@@ -67,7 +67,7 @@ typedef struct RST_SetIterator
 typedef struct RST_String_builder
 {
     char *buf;
-    int len;
+    size_t len;
 } RST_String_builder;
 
 typedef struct RST_JsonNode
@@ -103,13 +103,22 @@ char *RST_alloc_string_n(const char* src, int len);
 
 ///////////// RST_String_builder ///////////////
 RST_String_builder* RST_string_builder_init();
+RST_String_builder* RST_string_builder_init_with(const char* str);
+RST_String_builder* RST_string_builder_init_with_n(const char* str, size_t len);
+
 void RST_string_builder_append(RST_String_builder *sb, const char* str);
-void RST_string_builder_release(RST_String_builder* sb);
 void RST_string_builder_append_int(RST_String_builder *sb, int x);
-void RST_string_builder_append_n(RST_String_builder *sb, const char* str, int len);
+void RST_string_builder_append_n(RST_String_builder *sb, const char* str, size_t len);
 void RST_string_builder_append_char(RST_String_builder *sb, char c);
 void RST_string_builder_append_builder(RST_String_builder *sb, RST_String_builder *sb2);
 
+void RST_string_builder_slice_inplace(RST_String_builder* sb, size_t pos, size_t len);
+
+void RST_string_builder_clear(RST_String_builder* sb);
+void RST_string_builder_release(RST_String_builder* sb);
+
+
+void RST_string_builder_dtor(void *x);
 /*
 void* RST_box_int(int x);
 void RST_boxed_int_dtor(void *x);
@@ -167,6 +176,7 @@ void* RST_set_iterator_value(RST_SetIterator it);
 ///////////// Other ///////////////
 
 int RST_max(int a, int b);
+int RST_min(int a, int b);
 void RST_log_console(const char* s);
 
 void RST_debug_init();
@@ -175,8 +185,8 @@ void* RST_alloc(size_t size);
 void* RST_realloc(void* memory, size_t size);
 void RST_free(void *ptr);
 
-void* RST_alloc_tag(size, tag);
-void* RST_realloc_tag(memory, size, tag);
-void RST_free_tag(memory, tag);
+void* RST_alloc_tag(size_t size, const char *tag);
+void* RST_realloc_tag(void *memory, size_t size, char *tag);
+void RST_free_tag(void *memory, const char *tag);
 
 #endif

@@ -1,31 +1,41 @@
 #include <assert.h>
+#include <stdlib.h>
 
 #include "restserver.h"
 #include "tcpserver.h"
-
-#include "http_parser.h"
+#include "requestparser.h"
+//#include "http_parser.h"
 
 int RST_service_on_client_accepted(struct RST_SelectTcpServer* server, int client_socket)
 {
+    RST_log_console("RST_service_on_client_accepted");
     RST_Service* service = server->owner;
     RST_Client* client = RST_client_init(service, client_socket);
     RST_map_insert(service->clients, (void*)client_socket, (void*)client);
     return 0;
 }
 
-int RST_service_on_data_received(struct RST_SelectTcpServer* server, int client_socket, char* buf, int recved)
+int RST_service_on_data_received(struct RST_SelectTcpServer* server, int client_socket, uint8_t* buf, int recved)
 {
     RST_Service* service = server->owner;
     RST_Client* client = NULL;
     RST_log_console("RST_service_on_data_received");
-    RST_map_find(service->clients, (void*)client_socket, &client);
+    RST_map_find(service->clients, (void*)client_socket, (RST_Client**)&client);
     if (client->parser == NULL)
     {
         assert(0);
     }
     else 
     {
+        if (buf[0] == (char)0x7C) {
+            RST_log_console("Exit byte received\n");
+            exit(0);
+        }
+#ifdef RST_USE_HTTP_PARSER
         http_parser_settings settings;
+#else
+        RST_RequestParserSettings settings;
+#endif
         settings.on_url = RST_client_parser_on_url;
         settings.on_header_value = RST_client_parser_on_header_value;
         settings.on_header_field = RST_client_parser_on_header_field;
@@ -33,7 +43,17 @@ int RST_service_on_data_received(struct RST_SelectTcpServer* server, int client_
         settings.on_message_begin = RST_client_parser_on_message_begin;
         settings.on_message_complete = RST_client_parser_on_message_complete;
         settings.on_body = RST_client_parser_on_body;
-        int nparsed = http_parser_execute(client->parser, &settings, buf, recved);
+        RST_log_console("15 received bytes:\n");
+        for (int i = 0; i < recved && i < 25; i++) { printf("%x ", buf[i]); } printf("\n");
+        __a2e_l(buf, recved);
+        RST_log_console("15 converted bytes:\n");
+        for (int i = 0; i < recved && i < 25; i++) { printf("%x ", buf[i]); } printf("\n");
+#ifdef RST_USE_HTTP_PARSER
+        int nparsed = http_parser_execute(client->parser, &settings, (const char*)buf, recved);
+#else
+        int nparsed = RST_requestparser_execute(client->parser, &settings, (const char*)buf, recved);
+#endif
+        printf("RST_service_on_data_received::nparsed(%d)\n", nparsed);
     }
     return 0;
 }

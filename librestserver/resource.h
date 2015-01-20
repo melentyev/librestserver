@@ -3,11 +3,11 @@
 
 #include "websocket.h"
 
-typedef void(*RST_resource_callback)(struct RST_Request*, struct RST_Response *response);
+typedef void(*RST_resource_callback)(struct RST_Request* request, struct RST_Response *response);
 
-typedef void(*RST_ws_open_callback)(struct RST_WebSocketConnectionInterface*);
-typedef void(*RST_ws_message_callback)(struct RST_WebSocketConnectionInterface*, char* buf, int len);
-typedef void(*RST_ws_close_callback)(struct RST_WebSocketConnectionInterface*);
+typedef void(*RST_ws_open_callback)(struct RST_WebSocketConnectionInterface *conn);
+typedef void(*RST_ws_message_callback)(struct RST_WebSocketConnectionInterface *conn, char* buf, int len);
+typedef void(*RST_ws_close_callback)(struct RST_WebSocketConnectionInterface *conn);
 
 typedef struct RST_Resource
 {

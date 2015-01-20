@@ -20,7 +20,7 @@ RST_Resource* RST_service_find_resource(RST_Service* service, RST_Request *reque
 void RST_service_release(RST_Service* service);
 
 int RST_service_on_client_accepted(struct RST_SelectTcpServer*, int client_socket);
-int RST_service_on_data_received(struct RST_SelectTcpServer* server, int client_socket, char* buf, int recved);
+int RST_service_on_data_received(struct RST_SelectTcpServer* server, int client_socket, uint8_t* buf, int recved);
 int RST_service_on_data_sent(struct RST_SelectTcpServer*, int client_socket);
 
 

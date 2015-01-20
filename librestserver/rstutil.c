@@ -10,6 +10,11 @@ int RST_max(int a, int b)
     return a > b ? a : b;
 }
 
+int RST_min(int a, int b)
+{
+    return a < b ? a : b;
+}
+
 /*void* RST_box_int(int x)
 {
     void* res = RST_alloc(sizeof(int));
@@ -66,6 +71,27 @@ RST_String_builder* RST_string_builder_init()
     return sb;
 }
 
+
+RST_String_builder* RST_string_builder_init_with(const char* str)
+{
+    return RST_string_builder_init_with_n(str, strlen(str));
+}
+
+RST_String_builder* RST_string_builder_init_with_n(const char* str, size_t len)
+{
+    RST_String_builder* sb = RST_ALLOC_STRUCT(RST_String_builder, "RST_string_builder_init_with::sb");
+    sb->len = len;
+    sb->buf = RST_alloc_string_n(str, len);
+    return sb;
+}
+
+void RST_string_builder_slice_inplace(RST_String_builder* sb, size_t pos, size_t len) {
+    char* new_buf = RST_alloc_string_n(sb->buf + pos, len);
+    RST_free_tag(sb->buf, "RST_string_builder_slice_inplace::sb->buf");
+    sb->buf = new_buf;
+    sb->len = len;
+}
+
 void RST_string_builder_append(RST_String_builder *sb, const char* str)
 {
     RST_string_builder_append_n(sb, str, strlen(str));
@@ -88,7 +114,7 @@ void RST_string_builder_append_builder(RST_String_builder *sb, RST_String_builde
     RST_string_builder_append_n(sb, sb2->buf, sb2->len);
 }
 
-void RST_string_builder_append_n(RST_String_builder *sb, const char* str, int len)
+void RST_string_builder_append_n(RST_String_builder *sb, const char* str, size_t len)
 {
     sb->buf = RST_REALLOC(sb->buf, sizeof(char) * (sb->len + len + 1), "RST_string_builder_append_n::sb->buf");
     memcpy(sb->buf + sb->len, str, len);
@@ -525,7 +551,7 @@ void* RST_alloc_tag(size_t size, const char* tag)
     return addr;
 }
 
-void* RST_realloc_tag(void* memory, size_t size, const char *tag)
+void* RST_realloc_tag(void *memory, size_t size, char *tag)
 {
     RST_debug_assert_ptr_allocated(memory);
     void *addr = RST_garbagepool_realloc(memory, size);

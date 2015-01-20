@@ -71,8 +71,10 @@
   <ItemGroup>
     <ClCompile Include="C-Thread-Pool-master\C-Thread-Pool-master\thpool.c" />
     <ClCompile Include="http_parser.c" />
+    <ClCompile Include="jsonparser.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="request.c" />
+    <ClCompile Include="requestparser.c" />
     <ClCompile Include="resource.c" />
     <ClCompile Include="response.c" />
     <ClCompile Include="rstclient.c" />
@@ -80,11 +82,13 @@
     <ClCompile Include="service.c" />
     <ClCompile Include="tcpserver.c" />
     <ClCompile Include="wsconninterface.c" />
+    <ClCompile Include="zoshttpcommon.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C-Thread-Pool-master\C-Thread-Pool-master\thpool.h" />
     <ClInclude Include="dummy.h" />
     <ClInclude Include="request.h" />
+    <ClInclude Include="requestparser.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="response.h" />
     <ClInclude Include="restserver.h" />
@@ -95,6 +99,7 @@
     <ClInclude Include="statuscode.h" />
     <ClInclude Include="tcpserver.h" />
     <ClInclude Include="websocket.h" />
+    <ClInclude Include="zoshttpcommon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

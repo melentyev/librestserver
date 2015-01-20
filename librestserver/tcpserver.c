@@ -38,9 +38,13 @@ int RST_selecttcpserver_start(RST_SelectTcpServer* server)
     server->server.sin_addr.s_addr = INADDR_ANY;
     server->clients = RST_set_init(RST_int_comparator, NULL);
     server->finished_clients = RST_vector_init(NULL);
+    int error = 0;
     if (bind(server->serv_sock, (struct sockaddr *)&(server->server), sizeof(server->server)) < 0)
-    {
-        RST_ERROR("Error: bind()");
+    {   
+#ifdef WIN32
+        error = WSAGetLastError();
+#endif
+        fprintf(stderr, "Error: bind(), code=%d\n", error);
     }
     if (listen(server->serv_sock, server->max_connections) != 0)
     {
@@ -73,7 +77,7 @@ int RST_selecttcpserver_server_loop(RST_SelectTcpServer* server)
             FD_SET(sock, &writeset);
         }
         struct timeval timeout;
-        timeout.tv_sec = 900;
+        timeout.tv_sec = 60;
         timeout.tv_usec = 0;
 
         int mx = RST_set_empty(server->clients) ? server->serv_sock : RST_max(server->serv_sock, (int)RST_set_max_element(server->clients));

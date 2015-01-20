@@ -54,6 +54,15 @@
     <ClCompile Include="http_parser.c">
       <Filter>http_parser</Filter>
     </ClCompile>
+    <ClCompile Include="zoshttpcommon.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="requestparser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jsonparser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpserver.h">
@@ -93,6 +102,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C-Thread-Pool-master\C-Thread-Pool-master\thpool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="zoshttpcommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="requestparser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
