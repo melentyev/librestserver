@@ -5,6 +5,10 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librestserver", "librestserver\librestserver.vcxproj", "{DD2FA9CF-35A4-454D-BCE1-F9740A402EB5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testapp", "testapp\testapp.vcxproj", "{BAD2C996-E35E-4CD7-81D2-4A8BB62C445C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testcgi1", "testcgi1\testcgi1.vcxproj", "{1D4061A3-F0ED-42DC-8441-10F5404BDDB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,6 +19,14 @@ Global
 		{DD2FA9CF-35A4-454D-BCE1-F9740A402EB5}.Debug|Win32.Build.0 = Debug|Win32
 		{DD2FA9CF-35A4-454D-BCE1-F9740A402EB5}.Release|Win32.ActiveCfg = Release|Win32
 		{DD2FA9CF-35A4-454D-BCE1-F9740A402EB5}.Release|Win32.Build.0 = Release|Win32
+		{BAD2C996-E35E-4CD7-81D2-4A8BB62C445C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BAD2C996-E35E-4CD7-81D2-4A8BB62C445C}.Debug|Win32.Build.0 = Debug|Win32
+		{BAD2C996-E35E-4CD7-81D2-4A8BB62C445C}.Release|Win32.ActiveCfg = Release|Win32
+		{BAD2C996-E35E-4CD7-81D2-4A8BB62C445C}.Release|Win32.Build.0 = Release|Win32
+		{1D4061A3-F0ED-42DC-8441-10F5404BDDB2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1D4061A3-F0ED-42DC-8441-10F5404BDDB2}.Debug|Win32.Build.0 = Debug|Win32
+		{1D4061A3-F0ED-42DC-8441-10F5404BDDB2}.Release|Win32.ActiveCfg = Release|Win32
+		{1D4061A3-F0ED-42DC-8441-10F5404BDDB2}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <errno.h>
 
 #include "thpool.h"      /* here you can also find the interface to each function */
@@ -39,6 +38,14 @@ static int thpool_keepalive=1;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /* used to serialize queue access */
 
 
+#ifndef WIN32 
+int sem_init(sem_t *sem, int shared, unsigned int value) 
+{
+    sem->mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(sem->mutex, NULL);
+    sem->prot_value = value;
+}
+#endif
 
 
 /* Initialise thread pool */
