@@ -17,6 +17,8 @@
 
 #define RST_ALLOC_STRUCT(S, tag) (S*)RST_alloc_tag(sizeof(S), (tag))
 
+#define SCHEDULE2(tp, func, p1, p2) { void **ps = (void**)RST_alloc(sizeof(void*) * 2); ps[0] = (void*)(p1); ps[1] = (void*)(p2); thpool_add_work(tp, func, (void*)ps); }
+
 #define RST_VECTOR_PUSH_BACK(x) RST_vector_push_back(0, (x))
 
 typedef int(RST_abstract_comparator)(void*, void*);
@@ -69,28 +71,8 @@ typedef struct RST_String_builder
     char *buf;
     size_t len;
 } RST_String_builder;
-
-typedef struct RST_JsonNode
-{
-    union 
-    {
-        int integral;
-        double floating;
-        char *string;
-        RST_Vector *array;
-        RST_Map *object;
-    } value;
-
-    enum 
-    {
-        JNODE_INTEGRAL,
-        JNODE_FLOATING,
-        JNODE_OBJECT,
-        JNODE_ARRAY
-    } nodeType;
-} RST_JsonNode;
     
-RST_JsonNode* RST_json_get_node(RST_JsonNode* root, const char* path, ...);/*
+/*RST_JsonNode* RST_json_get_node(RST_JsonNode* root, const char* path, ...);
 {
     va_list ap;
     va_start
@@ -103,7 +85,7 @@ char *RST_alloc_string_n(const char* src, int len);
 
 ///////////// RST_String_builder ///////////////
 RST_String_builder* RST_string_builder_init();
-RST_String_builder* RST_string_builder_init_with(const char* str);
+RST_String_builder* RST_string_builder_init_with(const char* str); 
 RST_String_builder* RST_string_builder_init_with_n(const char* str, size_t len);
 
 void RST_string_builder_append(RST_String_builder *sb, const char* str);
@@ -113,6 +95,7 @@ void RST_string_builder_append_char(RST_String_builder *sb, char c);
 void RST_string_builder_append_builder(RST_String_builder *sb, RST_String_builder *sb2);
 
 void RST_string_builder_slice_inplace(RST_String_builder* sb, size_t pos, size_t len);
+char* RST_string_builder_move_data(RST_String_builder* sb);
 
 void RST_string_builder_clear(RST_String_builder* sb);
 void RST_string_builder_release(RST_String_builder* sb);
@@ -180,6 +163,10 @@ int RST_min(int a, int b);
 void RST_log_console(const char* s);
 
 void RST_debug_init();
+
+char *RST_str_replace(char *orig, char *rep, char *with);
+
+/////// MEMORY CONTROL ////////
 
 void* RST_alloc(size_t size);
 void* RST_realloc(void* memory, size_t size);

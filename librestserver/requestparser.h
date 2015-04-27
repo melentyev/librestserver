@@ -1,8 +1,9 @@
 #ifndef _RST_REQUESTPARSER
 #define _RST_REQUESTPARSER 1
 
-#include <stdint.h>
 #include "rstutil.h"
+
+#include <stdint.h>
 
 enum RST_ParserState {
     RST_ps_start,

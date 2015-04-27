@@ -21,9 +21,9 @@ RST_ResourceWebSocket* RST_resourcewebsocket_init()
     return ws;
 }
 
-RST_Resource* RST_resource_websocket_init(const char* path, 
-    RST_ws_open_callback on_open, 
-    RST_ws_message_callback on_message, 
+RST_Resource* RST_resource_websocket_init(const char* path,
+    RST_ws_open_callback on_open,
+    RST_ws_message_callback on_message,
     RST_ws_close_callback on_close)
 {
     RST_Resource* resource = (RST_Resource*)RST_alloc(sizeof(RST_Resource));

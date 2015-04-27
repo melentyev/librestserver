@@ -1,9 +1,10 @@
-#include "restserver.h"
+#include "rstutil.h"
 
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 int RST_max(int a, int b)
 {
@@ -94,7 +95,10 @@ void RST_string_builder_slice_inplace(RST_String_builder* sb, size_t pos, size_t
 
 void RST_string_builder_append(RST_String_builder *sb, const char* str)
 {
-    RST_string_builder_append_n(sb, str, strlen(str));
+    if (str)
+    {
+        RST_string_builder_append_n(sb, str, strlen(str));
+    }
 }
 
 void RST_string_builder_append_int(RST_String_builder *sb, int x)
@@ -111,7 +115,10 @@ void RST_string_builder_append_char(RST_String_builder *sb, char c)
 
 void RST_string_builder_append_builder(RST_String_builder *sb, RST_String_builder *sb2)
 {
-    RST_string_builder_append_n(sb, sb2->buf, sb2->len);
+    if (sb2)
+    {
+        RST_string_builder_append_n(sb, sb2->buf, sb2->len);
+    }
 }
 
 void RST_string_builder_append_n(RST_String_builder *sb, const char* str, size_t len)
@@ -122,6 +129,12 @@ void RST_string_builder_append_n(RST_String_builder *sb, const char* str, size_t
     sb->buf[sb->len] = 0;
 }
 
+char* RST_string_builder_move_data(RST_String_builder* sb)
+{
+    char * buf = sb->buf;
+    RST_FREE(sb, "RST_string_builder_move_data::sb");
+    return buf;
+}
 
 void RST_string_builder_release(RST_String_builder* sb)
 {
@@ -414,22 +427,66 @@ void RST_log_console(const char *s)
     puts(s);
 }
 
+// You must free the result if result is non-NULL.
+char *RST_str_replace(char *orig, char *rep, char *with) {
+    char *result; // the return string
+    char *ins;    // the next insert point
+    char *tmp;    // varies
+    int len_rep;  // length of rep
+    int len_with; // length of with
+    int len_front; // distance between rep and end of last rep
+    int count;    // number of replacements
+
+    if (!orig)
+        return NULL;
+    if (!rep)
+        rep = "";
+    len_rep = strlen(rep);
+    if (!with)
+        with = "";
+    len_with = strlen(with);
+
+    ins = orig;
+    for (count = 0; tmp = strstr(ins, rep); ++count) {
+        ins = tmp + len_rep;
+    }
+
+    // first time through the loop, all the variable are set correctly
+    // from here on,
+    //    tmp points to the end of the result string
+    //    ins points to the next occurrence of rep in orig
+    //    orig points to the remainder of orig after "end of rep"
+    tmp = result = RST_ALLOC(strlen(orig) + (len_with - len_rep) * count + 1, "RST_str_replace");
+
+    if (!result)
+        return NULL;
+
+    while (count--) {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep; // move to next "end of rep"
+    }
+    strcpy(tmp, orig);
+    return result;
+}
+
+/////// MEMORY CONTROL ////////
+
 #undef malloc
 #undef free
 #undef realloc
-
-int allocaddresses[100000];
-int allocaddrcount;
 
 #define GFILL 'Z'
 
 typedef struct RST_GarbagePool
 {
-    unsigned char buf[1024 * 1024 * 200];   
-    int allocations[100000];
-    int allocations_sizes[100000];
+    unsigned char buf[1024 * 1024 * 300];   
+    int allocations[5000000];
+    int allocations_sizes[500000];
     int allocations_count;
-    int allocations_is_free[100000];
+    int allocations_is_free[500000];
     int free_buf_ptr;
 } RST_GarbagePool;
 
@@ -462,9 +519,8 @@ void* RST_garbagepool_alloc(size_t size)
     return res;
 }
 
-void* RST_garbagepool_realloc(void* memory, size_t size)
+int RST_garbagepool_assert_ptr_allocated(void *memory)
 {
-    
     int found = -1;
     for (int i = 0; i < gpool.allocations_count; i++)
     {
@@ -473,7 +529,17 @@ void* RST_garbagepool_realloc(void* memory, size_t size)
             found = i;
         }
     }
+    if (found == -1) {
+        char breakpoint = 'b';
+    }
     assert(found != -1);
+    return found;
+}
+
+void* RST_garbagepool_realloc(void* memory, size_t size)
+{
+    
+    int found = RST_garbagepool_assert_ptr_allocated(memory);
     void* res = RST_garbagepool_alloc(size);
     memcpy(res, (void*)(gpool.allocations[found]), gpool.allocations_sizes[found]);
     if (found == 0x1b) {
@@ -493,6 +559,9 @@ void RST_garbagepool_free(void* memory)
             found = i;
         }
     }
+    if (found == -1) {
+        char breakpoint = 'b';
+    }
     assert(found != -1 && !gpool.allocations_is_free[found]);
     if (found == 0x1b) { 
         int a = 5; 
@@ -500,70 +569,46 @@ void RST_garbagepool_free(void* memory)
     gpool.allocations_is_free[found] = 1;
 }
 
-void RST_debug_assert_ptr_allocated(void *memory)
-{
-    int found = 0;
-    for (int i = 0; i < allocaddrcount; i++)
-    {
-        if (allocaddresses[i] == (int)memory)
-        {
-            found = 1;
-            break;
-        }
-    }
-    if (!found)
-    {
-        int a = 8;
-    }
-    assert(found);
-}
-
 void* RST_alloc(size_t size)
 {
     void *addr = RST_garbagepool_alloc(size); //malloc(size);
-    allocaddresses[allocaddrcount++] = (int)addr;
     RST_LOG_FMT(stderr, "RST_alloc  addr(%08x) size(%d)\n", addr, size);
     return addr;
 }
 
 void* RST_realloc(void* memory, size_t size)
 {
-    RST_debug_assert_ptr_allocated(memory);
+    RST_garbagepool_assert_ptr_allocated(memory);
     void *addr = RST_garbagepool_realloc(memory, size);
-    allocaddresses[allocaddrcount++] = (int)addr;
     RST_LOG_FMT(stderr, "RST_realloc  addr(%08x) size(%d) oldaddr(%08x)\n", addr, size, memory);
     return addr;
 }
 
 void RST_free(void *ptr)
 {
-    RST_debug_assert_ptr_allocated(ptr);
-    for (int i = 0; i < allocaddrcount; i++) { if (allocaddresses[i] == (int)ptr) { allocaddresses[i] = 0; break; } }
+    RST_garbagepool_assert_ptr_allocated(ptr);
     RST_LOG_FMT(stderr, "RST_free oldaddr(%08x)\n", ptr);
     RST_garbagepool_free(ptr);
 }
 
 void* RST_alloc_tag(size_t size, const char* tag)
 {
-    void *addr = RST_garbagepool_alloc(size);
-    allocaddresses[allocaddrcount++] = (int)addr;
+    void *addr = RST_alloc(size);
     RST_LOG_FMT(stderr, "ALLOC addr(%08x) size(%d) tag(%s)\n", addr, size, tag);
     return addr;
 }
 
 void* RST_realloc_tag(void *memory, size_t size, char *tag)
 {
-    RST_debug_assert_ptr_allocated(memory);
-    void *addr = RST_garbagepool_realloc(memory, size);
-    allocaddresses[allocaddrcount++] = (int)addr;
+    RST_garbagepool_assert_ptr_allocated(memory);
+    void *addr = RST_realloc(memory, size);
     RST_LOG_FMT(stderr, "REALLOC addr(%08x) size(%d) oldaddr(%08x) tag(%s)\n", addr, size, memory, tag);
     return addr;
 }
 
 void RST_free_tag(void *ptr, const char *tag)
 {
-    RST_debug_assert_ptr_allocated(ptr);
-    for (int i = 0; i < allocaddrcount; i++) { if (allocaddresses[i] == (int)ptr) { allocaddresses[i] = 0; break; } }
+    RST_garbagepool_assert_ptr_allocated(ptr);
     RST_LOG_FMT(stderr, "FREE oldaddr(%08x) tag(%s)\n", ptr, tag);
-    RST_garbagepool_free(ptr);
+    RST_free(ptr);
 }

@@ -3,6 +3,19 @@
 
 #include "http_parser.h"
 
+#define NO_THREADING
+
+#ifdef NO_THREADING
+void thpool_add_work(thpool_t *tp, void*(*func)(void*), void* ps) {
+    func(ps);
+}
+#elif USE_THREAD_POOL
+void thpool_add_work(thpool_t *tp, void*(*func)(void*), void* ps) {
+    pthread_t thread;
+    pthread_create(&thread, NULL, (void *)func, ps);
+}
+#endif
+
 RST_Client* RST_client_init(RST_Service *owner, int client_socket)
 {
     
@@ -12,6 +25,7 @@ RST_Client* RST_client_init(RST_Service *owner, int client_socket)
     client->body_recved = 0;
     client->upgrade_websocket = 0;
     client->request = RST_request_init();
+    client->request->from_socket = client_socket;
     client->parser_header_field = NULL;
     client->parser_header_value = NULL;
     client->service = owner;
@@ -25,13 +39,6 @@ RST_Client* RST_client_init(RST_Service *owner, int client_socket)
 #endif
     client->parser->data = client;
     return client;
-}
-
-
-void RST_client_send_async(RST_Client* client, char* buf, int len)
-{
-    __e2a_l(buf, len);
-    RST_tcpserver_send(client->service->server, client->socket, buf, len);
 }
 
 #ifdef RST_USE_HTTP_PARSER
@@ -132,6 +139,49 @@ int RST_request_parse_query_string(RST_Request *request, const char* qstr, int l
     return 1;
 }
 
+void RST_client_send_sb_async(RST_Client *client, RST_String_builder *sb)
+{
+    RST_log_console("RST_client_send_sb_async");
+    __e2a_l(sb->buf, sb->len);
+    int len = sb->len;
+    RST_tcpserver_send(client->service->server, client->socket, sb->buf, len);
+}
+
+void* scheduled_handle_request(void **params)
+{
+    printf("THREAD RUN scheduled_handle_request");
+    RST_Resource* resource = (RST_Resource*)params[0];
+    RST_Client *client = (RST_Client*)params[1];
+    RST_FREE(params, "scheduled_handle_request::params");
+    RST_Response *response = RST_resource_handle_request(resource, client->request);
+    assert(response);
+    if (response) 
+    {
+        client->response_buffer = RST_response_to_string(response);
+        RST_response_release(response);
+        RST_client_send_sb_async(client, client->response_buffer);
+    }
+    else
+    {
+        
+    }
+    return NULL;
+}
+
+void* scheduled_generic_handle(void **params)
+{
+    printf("THREAD RUN scheduled_generic_handle");
+    RST_Client *client = (RST_Client*)params[0];
+    RST_FREE(params, "scheduled_generic_handle::params");
+    RST_Response *response = RST_response_init();
+    client->service->generic_handler(client->request, response);
+
+    client->response_buffer = RST_response_to_string(response);
+    RST_response_release(response);
+    RST_client_send_sb_async(client, client->response_buffer);
+    return NULL;
+}
+
 #ifdef RST_USE_HTTP_PARSER
 int RST_client_parser_on_message_complete(http_parser *parser)
 #else
@@ -145,10 +195,11 @@ int RST_client_parser_on_message_complete(RST_RequestParser *parser)
     request->method = parser->method;
     request->http_major = parser->http_major;
     request->http_minor = parser->http_minor;
+    RST_log_console("RST_client_parser_on_message_complete\n");
 #ifdef RST_USE_HTTP_PARSER
     struct http_parser_url url_data;
     http_parser_parse_url(request->url->buf, request->url->len, 0, &url_data);
-    
+
     int plen = url_data.field_data[UF_PATH].len;
     int poff = url_data.field_data[UF_PATH].off;
     int qlen = url_data.field_data[UF_QUERY].len;
@@ -167,21 +218,25 @@ int RST_client_parser_on_message_complete(RST_RequestParser *parser)
     {
         response = RST_response_init_bad_request(request, NULL);
     }
-    else 
+    else
     {
         RST_Resource *resource = RST_service_find_resource(client->service, client->request);
+        printf("BEFORE SCHEDULING");
         if (resource == NULL)
         {
-            response = RST_response_init_not_found(request, NULL);
+            SCHEDULE2(client->service->server->threadpool, scheduled_generic_handle, client, NULL);
         }
         else
         {
-            response = RST_resource_handle_request(resource, client->request);
+            SCHEDULE2(client->service->server->threadpool, scheduled_handle_request, resource, client);
         }
     }
-    RST_String_builder *response_data = RST_response_to_string(response);
-    RST_response_release(response);
-    RST_client_send_async(client, response_data->buf, response_data->len);
+    if (response) 
+    {
+        client->response_buffer = RST_response_to_string(response);
+        RST_response_release(response);
+        RST_client_send_sb_async(client, client->response_buffer);
+    }
     return 0;
 }
 

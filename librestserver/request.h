@@ -15,6 +15,7 @@ typedef struct RST_Request
     RST_String_builder *url;
     RST_String_builder *body;
     char* path;
+    int from_socket;
 } RST_Request;
 
 ///////////// RST_Request ///////////////

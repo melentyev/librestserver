@@ -18,23 +18,33 @@ void RST_response_version_from_request(RST_Response *response, RST_Request *requ
     response->http_minor = request->http_minor;
 }
 
-RST_Response* RST_response_init_not_found(RST_Request *request, const char* message)
+void RST_response_set_not_found(RST_Response *response, RST_Request *request, const char* message)
 {
-    RST_Response* response = RST_response_init();
     response->status_code = RST_STATUSCODE_NOT_FOUND;
     RST_response_set_status_message(response, message == NULL ? "Not found" : message);
     RST_response_version_from_request(response, request);
     RST_response_set_body(response, "");
+}
+
+RST_Response* RST_response_init_not_found(RST_Request *request, const char* message)
+{
+    RST_Response* response = RST_response_init();
+    RST_response_set_not_found(response, request, message);
     return response;
+}
+
+void RST_response_set_bad_request(RST_Response *response, RST_Request *request, const char* message)
+{
+    response->status_code = RST_STATUSCODE_BAD_REQUEST;
+    RST_response_set_status_message(response, message == NULL ? "Bad request" : message);
+    RST_response_version_from_request(response, request);
+    RST_response_set_body(response, "");
 }
 
 RST_Response* RST_response_init_bad_request(RST_Request *request, const char* message)
 {
     RST_Response* response = RST_response_init();
-    response->status_code = RST_STATUSCODE_BAD_REQUEST;
-    RST_response_set_status_message(response, message == NULL ? "Bad request" : message);
-    RST_response_version_from_request(response, request);
-    RST_response_set_body(response, "");
+    RST_response_set_bad_request(response, request, message);
     return response;
 }
 
@@ -49,6 +59,11 @@ void RST_response_set_body_n(RST_Response* response, const char* body, int len)
     RST_string_builder_append_n(response->body, body, len);
     sprintf(sprintf_buf, "%d", response->body->len);
     RST_map_insert(response->headers, (void*)RST_alloc_string("Content-Length"), (void*)RST_alloc_string(sprintf_buf));
+}
+
+void RST_response_set_header(RST_Response* response, const char* name, const char* value)
+{
+    RST_map_insert(response->headers, (void*)RST_alloc_string(name), (void*)RST_alloc_string(value));
 }
 
 void RST_response_set_status_message(RST_Response* response, const char* msg)
